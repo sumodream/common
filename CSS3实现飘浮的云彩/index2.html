@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>飘浮的云彩</title>
+	
+	<style type="text/css">
+	canvas {
+	  display: block;
+	  margin: 2em;
+	}
+	.bg-canvas {
+	  position: fixed;
+	  top: 0;
+	  left: 0;
+	  z-index: -1;
+	  width: 100%;
+	  height: 100%;
+	  margin: 0;
+	}
+	body {
+	  background-image: -webkit-linear-gradient(bottom, #d7dde6 40%, #97a8c0 80%);
+	  background-image: linear-gradient(to top, #d7dde6 40%, #97a8c0 80%);
+	  background-size: cover;
+	  width: 400vw;
+	  height: 400vh;
+	}
+</style>
+</head>
+<body>
+	<script>console.clear();</script>
+	<script type="text/javascript">
+	Canvallax = (function() {
+
+  var W = window,
+      D = document,
+      R = D.documentElement,
+      B = D.body,
+      WSCROLL = { x: 0, y: 0 };
+
+  function onScroll(){
+    WSCROLL.x = R.scrollLeft || B.scrollLeft;
+    WSCROLL.y = R.scrollTop || B.scrollTop;
+  }
+  onScroll();
+  W.addEventListener('scroll', onScroll);
+
+  // Check for canvas support.
+  if ( !W.CanvasRenderingContext2D ) { return function(){ return false; }; }
+
+  function Init(options) {
+
+    var C = this;
+
+    C.canvas = D.createElement('canvas');
+
+    C.ctx = C.canvas.getContext('2d');
+
+    C.resize();
+    W.addEventListener('resize', C.resize.bind(C));
+
+    options = Canvallax.extend(Canvallax.defaults,options || {});
+
+    C.canvas.className = 'canvallax ' + options.className;
+    options.parent.insertBefore(C.canvas, options.parent.firstChild);
+
+    C.elements = [];
+    C.addElements(options.elements || []);
+
+
+    C.x = ( options.x !== undefined ? options.x : WSCROLL.x );
+    C.y = ( options.y !== undefined ? options.y : WSCROLL.y );
+
+    C.animating = true;
+
+    C.animation = {
+      fps: options.fps || 60,
+      then: Date.now()
+    };
+
+    C.animation.interval = 1000 / C.animation.fps || 1;
+
+    C.damping = options.damping || 5;
+    C.damping = ( !C.damping || C.damping < 1 ? 1 : C.damping );
+    var _x = 0,
+        _y = 0;
+
+
+    C.render = function() {
+      var i = 0,
+          len = C.elements.length,
+          now = Date.now(),
+          el, distance;
+
+      if ( C.animating !== false ) { requestAnimationFrame(C.render.bind(C)); }
+
+      C.animation.delta = now - C.animation.then;
+
+      if ( C.animation.delta < C.animation.interval ) { return; }
+
+      // Update then reference, just `then = now` is not enough.
+      // Lets say we set fps at 10 which means each frame must take 100ms
+      // Now frame executes in 16ms (60fps) so the loop iterates 7 times (16*7 = 112ms) until delta > interval === true
+      // Eventually this lowers down the FPS as 112*10 = 1120ms (NOT 1000ms).
+      // So we have to get rid of that extra 12ms by subtracting delta (112) % interval (100).
+
+      C.animation.then = now - (C.animation.delta % C.animation.interval);
+
+      if ( options.scroll ) {
+        C.x = ( options.scroll === 'invert' || options.scroll === 'invertx' ? -WSCROLL.x : WSCROLL.x );
+        C.y = ( options.scroll === 'invert' || options.scroll === 'inverty' ? -WSCROLL.y : WSCROLL.y );
+      }
+
+      //scrollPosition = ( WINDOW_TOP ) * (1 - dampeningY);
+      _x += ( -C.x - _x ) / C.damping;
+      _y += ( -C.y - _y ) / C.damping;
+      //C.scroll.y = WSCROLL.y < 0 ? 0 : -WSCROLL.y;
+
+      C.ctx.clearRect(0, 0, C.canvas.width, C.canvas.height);
+
+      for (; i < len; i += 1) {
+        el = C.elements[i];
+        distance = el.distance || 1;
+
+        C.ctx.globalAlpha = el.opacity || 1;
+        C.ctx.scale(distance,distance);
+        C.ctx.translate(_x, _y);
+        el.animate(now);
+        el.render(C.ctx);
+        if ( el.afterRender ) { el.afterRender.call(el, C.ctx); }
+        C.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        //C.ctx.restore();
+      }
+
+    };
+
+    C.render();
+
+    return C;
+  }
+
+  function Canvallax(options){
+    return new Init(options);
+  }
+
+
+////////////////////////////////////////
+
+
+  var fn = Canvallax.prototype = Init.prototype = {};
+
+  fn.resize = function() {
+    this.canvas.width = W.innerWidth;
+    this.canvas.height = W.innerHeight;
+  };
+
+  fn.addElement = function(element){
+    element.ctx = this.ctx;
+    if ( element.setup ) { element.setup.call(element, this.ctx); }
+    this.elements.push(element);
+  };
+
+  fn.addElements = function(elements){
+    var i = 0,
+        len = elements.length;
+    for (; i < len; i++) {
+      this.addElement(elements[i]);
+    }
+  };
+
+  fn.stop = fn.pause = function(){
+    this.animating = false;
+  };
+
+  fn.play = function(){
+    this.animation = true;
+    this.render();
+  };
+
+
+////////////////////////////////////////
+
+
+  Canvallax.defaults = {
+    scroll: true,
+    parent: B
+  };
+
+  Canvallax.extend = function(target) {
+    target = target || {};
+
+    var length = arguments.length,
+        i = 1;
+
+    if ( arguments.length === 1) {
+      target = this;
+      i = 0;
+    }
+
+    for (; i < length; i++) {
+      if (!arguments[i]) { continue; }
+      for (var key in arguments[i]) {
+        if ( arguments[i].hasOwnProperty(key) ) { target[key] = arguments[i][key]; }
+      }
+    }
+
+    return target;
+  };
+
+
+////////////////////////////////////////
+
+
+  Canvallax.Element = function(options) {
+
+    Canvallax.extend(this,Canvallax.Element.defaults,options);
+
+    if ( !this.tex && this.image ) {
+      this.tex = {
+        x: 0,
+        y: 0,
+        w: this.image.width,
+        h: this.image.height
+      };
+    }
+
+    if ( this.animation && this.animation.fps && this.animation.frames ) {
+      this.animation.interval = 1000 / this.animation.fps || 1;
+      this.animation.frame = this.animation.frame || 0;
+      this.animation.then = Date.now();
+    }
+  };
+
+  Canvallax.Element.defaults = {
+    x: 0,
+    y: 0,
+    distance: 1,
+    onRender: false
+  };
+
+  var elFn = Canvallax.Element.prototype = {};
+
+  elFn.render = function() {
+    if ( this.onRender ) { this.onRender.call(this); }
+    this.ctx.drawImage(this.image, this.tex.x, this.tex.y, this.tex.w, this.tex.h, this.x, this.y, this.tex.w, this.tex.h);
+    if ( this.afterRender ) { this.afterRender.call(this); }
+  };
+
+  // http://codetheory.in/controlling-the-frame-rate-with-requestanimationframe/
+
+  elFn.animate = function(now){
+    if ( this.animation ) {
+      this.animation.delta = now - this.animation.then;
+
+      if (this.animation.delta > this.animation.interval) {
+
+          // Just `then = now` is not enough.
+          // Lets say we set fps at 10 which means each frame must take 100ms
+          // Now frame executes in 16ms (60fps) so the loop iterates 7 times (16*7 = 112ms) until delta > interval === true
+          // Eventually this lowers down the FPS as 112*10 = 1120ms (NOT 1000ms).
+          // So we have to get rid of that extra 12ms by subtracting delta (112) % interval (100).
+
+          this.animation.then = now - (this.animation.delta % this.animation.interval);
+          this.animation.frame++;
+
+          if ( this.animation.frame >= this.animation.frames ) { this.animation.frame = 0; }
+
+      }
+    }
+  };
+
+  return Canvallax;
+
+})();
+
+
+(function(Canvallax){
+
+  var can = Canvallax({
+    className: 'bg-canvas',
+    scroll: true, // (boolean|'invert'|'invertx'|'inverty') If true, the X and Y of the scene are tied to document's scroll for a typical parallax experience. Set to false if you want to control the scene's X and Y manually.
+    x: 0, // Starting x. If tied to scroll, this will be overridden on render.
+    y: 0, // Starting y. If tied to scroll, this will be overridden on render.
+    damping: 1
+  });
+
+  if ( !can ) {
+    App.body.className += ' no-bg-canvas';
+    return false;
+  }
+
+  /*
+  // Animate the x and y with GSAP, not scroll.
+  TweenMax.to(can,4,{
+    //x: 1000,
+    y: 1000,
+    yoyo: true,
+    ease: Cubic.easeInOut,
+    repeat: -1,
+  });
+  */
+
+  ////////////////////////////////////////
+
+
+  var origWidth = width = document.body.clientWidth,
+      origHeight = height = document.body.clientHeight;
+
+  window.addEventListener('resize', function(){
+
+    height = document.body.clientHeight;
+
+    var i = can.elements.length,
+        max = document.body.clientWidth,
+        heightScale = height / origHeight;
+
+    console.log(height,origHeight,heightScale);
+
+    while (i--){
+      can.elements[i].maxX = max; //document.body.clientWidth;
+      can.elements[i].origY = can.elements[i].origY || can.elements[i].y;
+      can.elements[i].y = can.elements[i].origY * heightScale;
+    }
+  });
+
+  ////////////////////////////////////////
+
+  // Adapted from http://bost.ocks.org/mike/algorithms/
+  function bestCandidateSampler(width, height, numCandidates) {
+
+    var samples = [];
+
+    function findDistance(a, b) {
+      var dx = a[0] - b[0],
+          dy = a[1] - b[1];
+      return dx * dx + dy * dy;
+    }
+
+    function findClosest(c){
+      var i = samples.length,
+          sample,
+          closest,
+          distance,
+          closestDistance;
+
+      while(i--){
+        sample = samples[i];
+        distance = findDistance(sample,c);
+
+        if ( !closestDistance || distance < closestDistance ) {
+          closest = sample;
+          closestDistance = distance;
+        }
+      }
+
+      return closest;
+    }
+
+    function getSample() {
+      var bestCandidate,
+          bestDistance = 0,
+          i = 0,
+          c, d;
+
+      c = [Math.random() * width, Math.random() * height];
+
+      if ( samples.length < 1 ) {
+        bestCandidate = c;
+      } else {
+        for (; i < numCandidates; i++) {
+          c = [Math.random() * width, Math.random() * height];
+          d = findDistance(findClosest(c), c);
+
+          if (d > bestDistance) {
+            bestDistance = d;
+            bestCandidate = c;
+          }
+        }
+      }
+
+      samples.push(bestCandidate);
+      //console.log('bestCandidate',bestCandidate);
+      return bestCandidate;
+    }
+
+    getSample.all = function(){ return samples; };
+    getSample.samples = samples;
+
+    return getSample;
+  }
+
+  var getCandidate = bestCandidateSampler(width,height,10);
+
+  var CLOUD_COUNT = 40,
+      CLOUD_WIDTH = 510,
+      CLOUD_HEIGHT = 260;
+
+  CLOUD_COUNT = Math.floor(( width * height ) / (CLOUD_WIDTH * CLOUD_HEIGHT));
+  console.log(CLOUD_COUNT); // How many clouds to best fill the total area available
+
+  function Cloud(options) {
+    Canvallax.Element.call(this, options);
+    this.tex = {
+      x: 0,
+      y: options.texOffset || 0,
+      w: this.image.width,
+      h: this.image.height
+    };
+    //console.log(options.texOffset);
+    this.maxX = options.maxX || 0;
+    this.speed = options.speed || 0.25;
+  }
+
+  Cloud.prototype = Canvallax.Element.prototype;
+
+  function offsetDistance(width,distance){
+    var d = ( width / distance ) / ( 2 - distance);
+    //console.log('width',width,'distance',distance,d);
+    return d;
+  }
+
+  function cloudMove(){
+    //this.x = (this.x * this.distance) < this.maxX ? this.x + this.speed : -this.tex.w;
+    this.x = (this.x * this.distance) > -this.tex.w ? this.x - this.speed : offsetDistance(this.maxX,this.distance); // / (this.distance || 1);
+  }
+
+  function randomRange(min, max) {
+    return Math.random() * (max - min) + min;
+  }
+
+  function randomizedCloud(image){
+
+    var canvas = document.createElement('canvas'),
+        ctx = canvas.getContext('2d'),
+        width = canvas.width = 560, //CLOUD_WIDTH,
+        height = canvas.height = 260,//CLOUD_HEIGHT,
+        w = image.width,
+        h = image.height,
+        halfw = w / 2,
+        halfh = h / 2,
+        i = Math.ceil(randomRange(20,90)), //60
+        flip,
+        randScale,
+        randTex,
+        maxScale = 2.5,
+        fullPi = Math.PI / 2;
+
+    while (i--){
+      randScale = randomRange(0.4,maxScale);
+
+      ctx.globalAlpha = Math.random() - 0.2;
+      ctx.translate(randomRange(halfw, width - ( w * maxScale * 1.3)),randomRange(halfh,height - (h* maxScale)));
+      ctx.scale(randScale,randomRange(randScale - 0.3,randScale));
+      ctx.translate(halfw,halfh);
+      ctx.rotate(randomRange(0,fullPi));
+      ctx.drawImage(image, -halfw, -halfh);//, w, h, 0, 0, w, h);
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+
+    //document.body.appendChild(canvas);
+
+    //var img = document.createElement('img');
+    //img.src = canvas.toDataURL();
+
+    return canvas;
+  }
+
+  var cloudImg = new Image();
+  cloudImg.addEventListener('load',function(){
+
+    var i = CLOUD_COUNT, //Math.ceil(CLOUD_COUNT * 0.5),
+        el, rand, pos, tex;
+
+    while(i--) {
+      rand = Math.round(randomRange(0.5, 1.1) * 10) / 10;
+      pos = getCandidate();
+      tex = randomizedCloud(cloudImg);
+
+      cloud = new Cloud({
+        image: tex,
+        maxX: width,
+        x: pos[0],
+        y: pos[1],
+        opacity: (rand < 0.8 ? 0.8 : rand ),
+        distance: rand,
+        speed: rand * randomRange(0.05,0.25),
+        onRender: cloudMove
+      });
+
+      can.addElement(cloud);
+    }
+
+    can.render();
+  });
+  cloudImg.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEYAAABGCAMAAABG8BK2AAAAYFBMVEX///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////8GYpHzAAAAIHRSTlMAAwcLDxIWGh8kKzI5QEhPVl9qc3uEi5Sdpa64wcrV4c6KdP8AAAOeSURBVHgBndQJkvM8DoNhS+nv/ieONBH8FIs1nb83ZLfF1wBFZ17vNMZ8fPz79/GY46Xre8F85kRzzhdk/A2TOpSARpF/g0mdaI8XZjg47leA32Jo3wbEooNE/SFGrPOAiPxC+xaDAxBTxQqFoW8wGGof89E4j8nQUceo621h/KY8GuXx4Mg10vRZlPd55JCEnXlIQX7cE8pNp8Dob4oY8LjZTny8QEMo2o2hSqT5YImxchVNbpgZ3oVR4xVUgOlGS5fFKCPSWDY4Yu1xIKyEEqLfE0UUKcoJ9MFVsAhnaOpEGW4gyxFyLitOeRhZO8NJur1hKpWWCV03oaG9yYcYXvD7UPbetVOMNwqlWH6/b7sp29G1Z5g6LFGaY9uYB2A6M7evtVco3U3M1CCopOlNY8Q7cdZahxIMTpv7meR2NghWDqdu8MTZzwMqN+RaBkmdUgf7wMfN1d1cNSAFMdhQ3tLXu2STuclylwYL5QYhsGyLz499bcgxK1F5SmumvaoRrIwSjYutaGbVZIgze6wegLO6i8MD2kJ1N1cYKAUXTLnRWxtnYrMONWRRD+EsA3utw4mnKxNCZRgplK5T05ycvaaZCmtAOEKl+p4ge70k06mcdrQoPgGpbY1EboNyY7/ZHVsfK1BLhBAdCA5MGd719b0gUOJmg9vc5hf3E+K2y1EQDnCjxoGs3t84WiA6zI253rVy6MRnSKNxJtQcRY3xL90MkN6DYGZHI3zBMaF1NcoUQ3Oll+9RBqHb1uIzSTmv9LtQOJbC7Ci/fRsivh0+sBrYwix3GKe8No5yHJTDaZqhqOp8KC6BdmXrFKFaXUUWk7uCLsRPbuAZrmsPjCANBKChIZj/97IBzSJq3pgpymiYRmnxMLG9YbinUGCk5rxbUhJDy/yH+C5U3wP1FQWDL5AtWpNQm0IRz/ys+psCTSKuCObTjY3KhLoCrbUY7ZgIqHRXrTSFHxwfFjcM1fWF8devtJPK2XtM6nAOpcrCXDlVR967qRi6XOY78NJsi95gcsJynMXF2k6gAFFhVFGLz0loz5u0HGoEGF6qOoVgC6cOB6iBb0Ixue66p+p8F+v17VkhUTqGXP6pVptC8JU07z0Ga5VqjmUpvBvuC8wpej4bJiXK+ZHnazfXyfUSipxPVJQvMTjppUKlFUVvv8PIVftrSIRD+Q6DQ7a47wzE9xjaYJk1Fty1v8CYauOLm+fv3Cikjv4lBqVCAP6n/gfZhdXQlm1mfwAAAABJRU5ErkJggg==';
+
+
+
+  ////////////////////////////////////////
+  // Full cloud texture image
+
+  /*
+  var texture = new Image(),
+      CLOUD_SPRITE_DISTANCE = 300;
+      
+  texture.addEventListener('load', function() {
+
+    //return false;
+
+    var i = Math.ceil(CLOUD_COUNT * 0.5),
+        cloud, rand, pos, tex;
+
+    while(i--) {
+      rand = Math.round(randomRange(0.3, 0.9) * 10) / 10;
+      pos = getCandidate();
+      tex = Math.floor(rand < 0.6 ? randomRange(4,6) : randomRange(0,3));
+
+      cloud = new Cloud({
+        image: texture,
+        maxX: width,
+        opacity: (rand < 0.8 ? 0.8 : rand ),
+        x: pos[0] - randomRange(0,width * 0.25), //randomRange(-300,window.innerWidth),
+        y: pos[1],
+        texOffset: tex * CLOUD_SPRITE_DISTANCE,//Math.ceil((1 - rand) * (CLOUD_SPRITE_COUNT + 1)) * CLOUD_SPRITE_DISTANCE, // Randomize the texture based on distance. Further away clouds are blurry.
+        distance: rand, //Math.random()
+        speed: rand * randomRange(0.025,0.2),
+        afterRender: cloudMove
+      });
+
+      can.addElement(cloud);
+    }
+
+    can.render();
+
+  });
+  texture.src = 'http://i.imgur.com/48yRQIF.png';
+  /**/
+
+
+})(Canvallax);
+
+//})();</script>
+</body>
+</html>
