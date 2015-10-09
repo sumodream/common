@@ -11,13 +11,14 @@
 	        #list img { float: left;}
 	        #buttons { position: absolute; height: 10px; width: 100px; z-index: 2; bottom: 20px; left: 250px;}
 	        #buttons span { cursor: pointer; float: left; border: 1px solid #fff; width: 10px; height: 10px; border-radius: 50%; background: #333; margin-right: 5px;}
-	        #buttons .on {  background: orangered;}
+	        #buttons .on {  background: red;}
 	        .arrow { cursor: pointer; display: none; line-height: 39px; text-align: center; font-size: 36px; font-weight: bold; width: 40px; height: 40px;  position: absolute; z-index: 2; top: 180px; background-color: RGBA(0,0,0,.3); color: #fff;}
 	        .arrow:hover { background-color: RGBA(0,0,0,.7);}
 	        #container:hover .arrow { display: block;}
 	        #prev { left: 20px;}
 	        #next { right: 20px;}
 	</style>
+
 	
 </head>
 <body>
@@ -41,21 +42,19 @@
 	    <a href="javascript:;" id="prev" class="arrow">&lt;</a>
 	    <a href="javascript:;" id="next" class="arrow">&gt;</a>
 	</div>
-	<script type="text/javascript">
+		<script type="text/javascript">
 		window.onload = function(){
-			//获取
-			var container = document.getElementById('container');
-            var list = document.getElementById('list');
-            var buttons = document.getElementById('buttons').getElementsByTagName('span');
-            var prev = document.getElementById('prev');
-            var next = document.getElementById('next');
-            var index = 1;
-            var animated = false;
-            var interval = 3000;
-            var timer;
+		var container = document.getElementById('container');
+		var list = document.getElementById('list');
+		var buttons = document.getElementById('buttons').getElementsByTagName('span');
+		var prev = document.getElementById('prev');
+		var next = document.getElementById('next');
+		var index = 1 ;
+		var animated = false ;
+		var interval = 3000 ;
+		var timer ;
 
-			//绑定事件  封装方法
-			function animate(offset){
+		function animate(offset){
 				if (offset == 0) {
                     return;
                 }
@@ -86,8 +85,7 @@
 				go();
 			}
 
-			//小圆点方法 显示消去小圆点
-			function showButton(){
+		function showButton(){
 				for(var i = 0 ; i < buttons.length ; i++){
 					if(buttons[i].className == 'on'){
 						buttons[i].className = '';
@@ -96,8 +94,7 @@
 				}
 				buttons[index - 1].className = 'on' ;
 			}
-
-			function play(){
+		function play(){
 				timer = setInterval(function(){
 					next.onclick();					
 				},interval);
@@ -106,8 +103,7 @@
 			function stop(){
 				clearInterval(timer);
 			}
-
-			next.onclick = function(){
+		next.onclick = function(){
 				if (animated) {
                     return;
                 }
@@ -133,31 +129,27 @@
 				showButton();
 				
 			}
+		
 
-			for(var i = 0 ; i < buttons.length ; i++){
-				buttons[i].onclick = function(){
-					//此判断描述的是当小圆点在当前原点时 重复点击当前原点 不跑程序
-					if (animated) {
-                        return;
-                    }
-					if(this.className == 'on'){
-						return ;
-					}
-					//getAttribute获取自定义的属性  index
-					var myIndex = parseInt(this.getAttribute('index'));
-					var offset = -600 * (myIndex - index ) ;
-					
-					animate(offset);					
-					//切换完之后更新
-					index = myIndex ;
-					showButton();
+		for(var i = 0 ; i < buttons.length ; i++){
+			buttons[i].onclick = function(){
+				if(animated){
+					return;
+				}if(this.className == 'on'){
+					return ;
 				}
-			}
-			container.onmouseover = stop;
-			container.onmouseout = play ;
-			play();			
+				var myIndex = parseInt(this.getAttribute('index'));
+				var offset = (myIndex - index ) * -600 ;
+				animate(offset);
+				index = myIndex ;
+				showButton(); 
+			} 
 		}
+		container.onmouseover = stop;
+			container.onmouseout = play ;
+			play();	
 
+}
 	</script>
 </body>
 </html>
