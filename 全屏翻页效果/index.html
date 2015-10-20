@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>页面切换</title>
+<style type="text/css">
+h2,body,html{
+	padding: 0;
+	margin: 0;
+}
+body{
+	font-family: Arial,"Microsoft YaHei","Hiragino Sans GB",sans-serif;
+}
+html,body{
+	height: 100%;
+	overflow: hidden;
+}
+h2{
+	font-size: 4em;
+	font-weight: normal;
+}
+p{
+	font-size: 2em;
+	margin:0.5em 0 2em 0;
+}
+#container,.section{
+	height: 100%;
+	position: relative;
+}
+#section0,
+#section1,
+#section2,
+#section3{
+	background-color: #000;
+	background-size: cover;
+	background-position: 50% 50%;
+}
+#section0{
+	background:#00ff99;
+	color: #fff;
+
+}
+#section1{
+	color: #fff;
+
+	background:#FFCC00;
+}
+#section2{
+	background:#2fe2bf;
+	color: #fff;
+
+}
+#section3{
+	color: #fff;
+	background:pink;
+
+}
+#section0  #section3 p{
+	color: #fff;
+}
+
+.left{
+	float: left;
+}
+
+.intro{
+	position: absolute;
+	top: 50%;
+	width: 100%;
+	-webkit-transform: translateY(-50%);
+	transform: translateY(-50%);
+	text-align: center;
+}
+
+#pages{
+	position:fixed;
+	right: 10px;
+	top: 50%;
+	list-style: none;
+}
+#pages li{
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: #fff;
+	margin: 0 0 10px 5px;
+	cursor: pointer;
+}
+#pages li.active{
+	width: 8px;
+	height: 8px;
+	background: black;
+	border-radius: 50%;
+	margin: 0 0 10px 5px;
+	cursor: pointer;
+
+}
+
+#section0 .title{
+	-webkit-transform: translateX(-100%);
+	transform: translateX(-100%);
+	-webkit-animation: sectitle0 1s ease-in-out 100ms forwards;
+	animation: sectitle0 1s ease-in-out 100ms forwards;
+}
+#section0 p{
+	-webkit-transform: translateX(100%);
+	transform: translateX(100%);
+	-webkit-animation: sec0 1s ease-in-out 100ms forwards;
+	animation: sec0 1s ease-in-out 100ms forwards;
+}
+@-webkit-keyframes sectitle0{
+	0%{
+		-webkit-transform: translateX(-100%);
+		transform: translateX(-100%);
+	}
+	100%{
+		-webkit-transform: translateX(0);
+		transform: translateX(0);
+	}
+}
+@keyframes sectitle0{
+	0%{
+		-webkit-transform: translateX(-100%);
+		transform: translateX(-100%);
+	}
+	100%{
+		-webkit-transform: translateX(0);
+		transform: translateX(0);
+	}
+}
+@-webkit-keyframes sec0{
+	0%{
+		-webkit-transform: translateX(100%);
+		transform: translateX(100%);
+	}
+	100%{
+		-webkit-transform: translateX(0);
+		transform: translateX(0);
+	}
+}
+@keyframes sec0{
+	0%{
+		-webkit-transform: translateX(100%);
+		transform: translateX(100%);
+	}
+	100%{
+		-webkit-transform: translateX(0);
+		transform: translateX(0);
+	}
+}
+</style>
+</head>
+<body>
+
+<div id="container">
+	<div class="section active" id="section0">
+		<div class="intro">
+			<h2 class="title">全屏翻页效果</h2>
+			<p>滑动鼠标...点击右边圆圈...按下向下方向键开始吧</p>
+		</div>
+	</div>
+	<div class="section" id="section1">
+		<div class="intro">
+			<h2 class="title">举个栗子</h2>
+			<p>一共四页</p>
+		</div>
+		
+	</div>
+	<div class="section" id="section2">
+		<div class="intro">
+			<h2 class="title">举个栗子</h2>
+			<p>这是第三页</p>
+		</div>
+	</div>
+	<div class="section" id="section3">
+		<div class="intro">
+			<h2 class="title">最后一页</h2>
+			<p>结束啦,你可以开始敲代码啦~</p>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript" src="js/jquery.min.js"></script>
+<script type="text/javascript" src="js/init.js"></script>
+<script type="text/javascript">
+$(function(){
+	$("#container").switchPage({
+		'loop' : true,
+		'keyboard' : true,
+		'direction' : 'vertical'
+	});
+});
+</script>
+
+</body>
+</html>
