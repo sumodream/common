@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>loading</title>
+	 <style>
+  .card {
+    text-align: center;
+    vertical-align: middle;
+    height: 200px;
+  }
+  .loadingword {
+    color: #402356;
+    font-size: 28px;
+    font-family: cursive;
+    top: 20px;
+}
+  @-moz-keyframes throbber-loader {
+  0% {
+    background: #fff5e9;
+  }
+  10% {
+    background: #fad9c6;
+  }
+  40% {
+    background: #fff5e9;
+  }
+}
+@-webkit-keyframes throbber-loader {
+  0% {
+    background: #fff5e9;
+  }
+  10% {
+    background: #fad9c6;
+  }
+  40% {
+    background: #fff5e9;
+  }
+}
+@keyframes throbber-loader {
+  0% {
+    background: #fff5e9;
+  }
+  10% {
+    background: #fad9c6;
+  }
+  40% {
+    background: #fff5e9;
+  }
+}
+/* :not(:required) hides these rules from IE9 and below */
+.throbber-loader:not(:required) {
+    -moz-animation: throbber-loader 2000ms 300ms infinite ease-out;
+    -webkit-animation: throbber-loader 2000ms 300ms infinite ease-out;
+    animation: throbber-loader 2000ms 300ms infinite ease-out;
+    background: #402356;
+    display: inline-block;
+    position: relative;
+    text-indent: -9999px;
+    width: 0.9em;
+    height: 0.9em;
+    margin: 0 1.6em;
+    border-radius: 100%;
+}
+.throbber-loader:not(:required):before, .throbber-loader:not(:required):after {
+    background: #402356;
+    content: '\x200B';
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    position: absolute;
+    top: 0;
+    border-radius: 100%;
+}
+.throbber-loader:not(:required):before {
+  -moz-animation: throbber-loader 2000ms 150ms infinite ease-out;
+  -webkit-animation: throbber-loader 2000ms 150ms infinite ease-out;
+  animation: throbber-loader 2000ms 150ms infinite ease-out;
+  left: -1.6em;
+}
+.throbber-loader:not(:required):after {
+  -moz-animation: throbber-loader 2000ms 450ms infinite ease-out;
+  -webkit-animation: throbber-loader 2000ms 450ms infinite ease-out;
+  animation: throbber-loader 2000ms 450ms infinite ease-out;
+  right: -1.6em;
+}
+
+  </style>
+</head>
+<body>
+	 <div class="loading">
+	 	<span class="loadingword">loading</span>&nbsp;
+        <span class="throbber-loader">&#402356;</span>
+      </div>
+</body>
+</html>
